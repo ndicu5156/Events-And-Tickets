@@ -1,0 +1,41 @@
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from app import db
+
+
+DATABASE_URL = "sqlite:///users.db"
+
+
+db = SQLAlchemy()
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=True)
+    nostr_key = db.Column(db.String(150), unique=True, nullable=True)
+
+    def __repr__(self):
+        return f'<User {self.email or self.nostr_key}>'
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    location = db.Column(db.String(150), nullable=True)
+    tickets_available = db.Column(db.Integer, nullable=False)
+    lightning_address = db.Column(db.String(150), nullable=False)  # New field for Lightning address
+
+    def __repr__(self):
+        return f'<Event {self.title}>'
+
+class Ticket(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    purchase_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='tickets')
+    event = db.relationship('Event', backref='tickets')
+
+    def __repr__(self):
+        return f'<Ticket {self.id} for Event {self.event_id}>'
